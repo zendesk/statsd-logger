@@ -9,6 +9,9 @@ Simple logger for StatsD metrics, adapted from http://lee.hambley.name/2013/01/2
 ```bash
 go get -u github.com/catkins/statsd-logger/cmd/statsd-logger
 statsd-logger
+
+# send it some metrics using a library or (low-tech) netcat
+echo -n "my.awesome_counter:1|c#cool_tags" | nc -u -u -w0 localhost 8125
 ```
 
 ### Library
