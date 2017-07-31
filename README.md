@@ -2,6 +2,21 @@
 
 Simple logger for StatsD metrics, adapted from http://lee.hambley.name/2013/01/26/dirt-simple-statsd-server-for-local-development.html to make it easier to debug metrics in development.s
 
+## Usage
+
+### CLI
+
+```bash
+go get -u github.com/catkins/statsd-logger/cmd/statsd-logger
+statsd-logger
+```
+
+### Library
+
+```bash
+go get -u github.com/catkins/statsd-logger
+```
+
 ## Licence
 
 The MIT License
