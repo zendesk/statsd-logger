@@ -88,7 +88,6 @@ func (l *server) Close() error {
 }
 
 func (l *server) logMetric(metric metric) {
-	fmt.Printf("got metric %+v\n", metric)
 	fmt.Fprintf(
 		l.output,
 		"[StatsD] %s %s %s\n",
