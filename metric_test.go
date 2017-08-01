@@ -9,19 +9,19 @@ import (
 func TestParseMetric(t *testing.T) {
 	cases := []struct {
 		input    string
-		expected metric
+		expected Metric
 	}{
 		{
 			input:    "catkins.cool.metric:1|c#city:melbourne,country:au",
-			expected: metric{name: "catkins.cool.metric", value: "1|c", tags: "city:melbourne country:au"},
+			expected: Metric{Name: "catkins.cool.metric", Value: "1|c", Tags: "city:melbourne country:au"},
 		},
 		{
 			input:    "another_rad.metric:142|ms|@0.5",
-			expected: metric{name: "another_rad.metric", value: "142|ms|@0.5", tags: ""},
+			expected: Metric{Name: "another_rad.metric", Value: "142|ms|@0.5", Tags: ""},
 		},
 	}
 
 	for _, tc := range cases {
-		assert.Equal(t, tc.expected, parseMetric(tc.input))
+		assert.Equal(t, tc.expected, ParseMetric(tc.input))
 	}
 }

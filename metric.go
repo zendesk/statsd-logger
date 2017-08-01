@@ -2,13 +2,15 @@ package statsdLogger
 
 import "strings"
 
-type metric struct {
-	name  string
-	value string
-	tags  string
+// Metric is an intermediate representation of a raw statsd metric for easier presentation
+type Metric struct {
+	Name  string
+	Value string
+	Tags  string
 }
 
-func parseMetric(rawMetric string) metric {
+// ParseMetric takes a raw statsd metric and returns a populated Metric
+func ParseMetric(rawMetric string) Metric {
 	metricNameAndRest := strings.SplitN(rawMetric, ":", 2)
 	name := metricNameAndRest[0]
 	valueAndTags := strings.SplitN(metricNameAndRest[1], "#", 2)
@@ -20,5 +22,5 @@ func parseMetric(rawMetric string) metric {
 		tags = strings.Replace(tags, ",", " ", -1)
 	}
 
-	return metric{name: name, value: value, tags: tags}
+	return Metric{Name: name, Value: value, Tags: tags}
 }

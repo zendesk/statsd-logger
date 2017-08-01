@@ -9,8 +9,6 @@ import (
 	"io"
 	"net"
 	"os"
-
-	"github.com/fatih/color"
 )
 
 // DefaultAddress to listen for metrics on
@@ -28,14 +26,26 @@ type Server interface {
 	Close() error
 }
 
-// New returns a local statsd logging server which logs to statsdLogger.DefaultOutput
+// New returns a local statsd logging server which logs to statsdLogger.DefaultOutput and is formatted with statsdLogger.DefaultFormatter
 func New(address string) (Server, error) {
-	return NewWithWriter(address, DefaultOutput)
+	return NewWithWriterAndFormatter(address, DefaultOutput, DefaultFormatter)
 }
 
 // NewWithWriter returns a local statsd logging server which logs to provided output
 func NewWithWriter(address string, output io.Writer) (Server, error) {
+	return NewWithWriterAndFormatter(address, output, DefaultFormatter)
+}
+
+// NewWithFormatter returns a local statsd logging server which logs with the provided formatter to statsdLogger.DefaultFormatter
+func NewWithFormatter(address string, formatter MetricFormatter) (Server, error) {
+	return NewWithWriterAndFormatter(address, DefaultOutput, formatter)
+}
+
+// NewWithWriterAndFormatter returns a local statsd logging server which logs to provided output and formats output with provided formatter
+func NewWithWriterAndFormatter(address string, output io.Writer, formatter MetricFormatter) (Server, error) {
 	addr, err := net.ResolveUDPAddr("udp", address)
+	port := addr.Port
+
 	if err != nil {
 		return nil, errors.New("[StatsD] Invalid address")
 	}
@@ -45,53 +55,63 @@ func NewWithWriter(address string, output io.Writer) (Server, error) {
 		return nil, errors.New("[StatsD] Unable to listen to udp stream")
 	}
 
-	server := server{address: address, connection: conn, output: output, closed: false}
+	server := server{
+		port:       port,
+		connection: conn,
+		output:     output,
+		closed:     false,
+		formatter:  formatter,
+	}
 
 	return &server, nil
 }
 
 type server struct {
-	address    string
+	port       int
 	connection *net.UDPConn
 	closed     bool
 	output     io.Writer
+	formatter  MetricFormatter
 }
 
-func (l *server) Listen() error {
-	if l.closed {
+func (s *server) Listen() error {
+	if s.closed {
 		return errors.New("[StatsD] Server already closed")
 	}
 
-	fmt.Fprintf(l.output, "[StatsD] Listening at %s\n", l.address)
+	fmt.Fprintf(s.output, "[StatsD] Listening on port %d\n", s.port)
 
 	buffer := make([]byte, 1024)
 
-	for !l.closed {
-		_, err := l.connection.Read(buffer)
+	for !s.closed {
+		numBytes, err := s.connection.Read(buffer)
+
+		// blocking read returns an error when connection is closed
+		if err != nil && s.closed {
+			break
+		}
 
 		if err != nil {
 			fmt.Printf("[StatsD] Read error %s: \n", err)
+			continue
 		}
 
-		metric := parseMetric(string(buffer))
-		l.logMetric(metric)
+		rawMetric := buffer[0:numBytes]
+		metric := ParseMetric(string(rawMetric))
+
+		s.logMetric(metric)
 	}
 
 	return nil
 }
 
-func (l *server) Close() error {
-	l.closed = true
-	fmt.Fprintf(l.output, "[StatsD] Shutting down\n")
-	l.connection.Close()
-	return nil
+func (s *server) Close() error {
+	s.closed = true
+	fmt.Fprintf(s.output, "[StatsD] Shutting down\n")
+
+	return s.connection.Close()
 }
 
-func (l *server) logMetric(metric metric) {
-	fmt.Fprintf(
-		l.output,
-		"[StatsD] %s %s %s\n",
-		color.BlueString(metric.name),
-		color.YellowString(metric.value),
-		color.CyanString(metric.tags))
+func (s *server) logMetric(metric Metric) {
+	fmt.Fprintf(s.output, s.formatter.Format(metric))
 }
