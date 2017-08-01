@@ -1,5 +1,7 @@
 ## StatsD Logger for Go
 
+[![Build Status](https://travis-ci.org/catkins/statsd-logger.svg?branch=master)](https://travis-ci.org/catkins/statsd-logger)
+
 Simple logger for StatsD metrics, adapted from http://lee.hambley.name/2013/01/26/dirt-simple-statsd-server-for-local-development.html to make it easier to debug metrics in development.
 
 ## Usage
