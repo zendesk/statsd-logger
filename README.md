@@ -1,6 +1,6 @@
 ## StatsD Logger for Go
 
-[![Build Status](https://travis-ci.org/catkins/statsd-logger.svg?branch=master)](https://travis-ci.org/catkins/statsd-logger) [![GoDoc](https://godoc.org/github.com/catkins/statsd-logger?status.svg)](https://godoc.org/github.com/catkins/statsd-logger)
+[![Build Status](https://travis-ci.org/catkins/statsd-logger.svg?branch=master)](https://travis-ci.org/catkins/statsd-logger) [![GoDoc](https://godoc.org/github.com/catkins/statsd-logger?status.svg)](https://godoc.org/github.com/catkins/statsd-logger) [![Go Report Card](https://goreportcard.com/badge/github.com/catkins/statsd-logger)](https://goreportcard.com/report/github.com/catkins/statsd-logger)
 
 Simple logger for StatsD metrics, adapted from http://lee.hambley.name/2013/01/26/dirt-simple-statsd-server-for-local-development.html to make it easier to debug metrics in development.
 
