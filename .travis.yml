@@ -13,5 +13,5 @@ before_install:
 install:
   - dep ensure -v
 
-test:
-  - go test ./...
+script:
+  - go test
