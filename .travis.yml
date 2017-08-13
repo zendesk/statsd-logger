@@ -14,4 +14,4 @@ install:
   - dep ensure -v
 
 script:
-  - go test -v
+  - go test -v -race
