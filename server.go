@@ -9,6 +9,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"sync"
+	"sync/atomic"
 )
 
 // DefaultAddress to listen for metrics on
@@ -27,55 +29,62 @@ type Server interface {
 }
 
 // New returns a local statsd logging server which logs to statsdLogger.DefaultOutput and is formatted with statsdLogger.DefaultFormatter
-func New(address string) (Server, error) {
-	return NewWithWriterAndFormatter(address, DefaultOutput, DefaultFormatter)
-}
-
-// NewWithWriter returns a local statsd logging server which logs to provided output
-func NewWithWriter(address string, output io.Writer) (Server, error) {
-	return NewWithWriterAndFormatter(address, output, DefaultFormatter)
-}
-
-// NewWithFormatter returns a local statsd logging server which logs with the provided formatter to statsdLogger.DefaultFormatter
-func NewWithFormatter(address string, formatter MetricFormatter) (Server, error) {
-	return NewWithWriterAndFormatter(address, DefaultOutput, formatter)
-}
-
-// NewWithWriterAndFormatter returns a local statsd logging server which logs to provided output and formats output with provided formatter
-func NewWithWriterAndFormatter(address string, output io.Writer, formatter MetricFormatter) (Server, error) {
+func New(address string, options ...func(*server)) (Server, error) {
 	addr, err := net.ResolveUDPAddr("udp", address)
-	port := addr.Port
-
 	if err != nil {
 		return nil, errors.New("[StatsD] Invalid address")
 	}
 
 	conn, _ := net.ListenUDP("udp", addr)
 	if err != nil {
-		return nil, errors.New("[StatsD] Unable to listen to udp stream")
+		return nil, fmt.Errorf("[StatsD] Unable to listen at udp: %s", address)
 	}
 
 	server := server{
-		port:       port,
+		port:       addr.Port,
 		connection: conn,
-		output:     output,
-		closed:     false,
-		formatter:  formatter,
+		output:     DefaultOutput,
+		formatter:  DefaultFormatter,
+		outputLock: &sync.Mutex{},
+	}
+
+	for _, optionFunc := range options {
+		optionFunc(&server)
 	}
 
 	return &server, nil
 }
 
+// WithWriter is is provided as an option to New to specify a custom io.Writer to output logs
+// usage:
+//	statsdLogger.New("0.0.0.0:8125", WithWriter(os.Stderr))
+func WithWriter(output io.Writer) func(*server) {
+	return func(server *server) {
+		server.output = output
+	}
+}
+
+// WithFormatter is is provided as an option to New to specify a custom formatter
+// usage:
+//
+//	statsdLogger.New("0.0.0.0:8125", WithFormatter(myCustomFormatter))
+func WithFormatter(formatter MetricFormatter) func(*server) {
+	return func(server *server) {
+		server.formatter = formatter
+	}
+}
+
 type server struct {
 	port       int
 	connection *net.UDPConn
-	closed     bool
+	closed     int32
 	output     io.Writer
 	formatter  MetricFormatter
+	outputLock *sync.Mutex
 }
 
 func (s *server) Listen() error {
-	if s.closed {
+	if s.isClosed() {
 		return errors.New("[StatsD] Server already closed")
 	}
 
@@ -83,11 +92,11 @@ func (s *server) Listen() error {
 
 	buffer := make([]byte, 1024)
 
-	for !s.closed {
+	for !s.isClosed() {
 		numBytes, err := s.connection.Read(buffer)
 
 		// blocking read returns an error when connection is closed
-		if err != nil && s.closed {
+		if err != nil && s.isClosed() {
 			break
 		}
 
@@ -106,12 +115,23 @@ func (s *server) Listen() error {
 }
 
 func (s *server) Close() error {
-	s.closed = true
+	atomic.StoreInt32(&s.closed, 1)
+
+	s.outputLock.Lock()
+	defer s.outputLock.Unlock()
+
 	fmt.Fprintf(s.output, "[StatsD] Shutting down\n")
 
 	return s.connection.Close()
 }
 
 func (s *server) logMetric(metric Metric) {
+	s.outputLock.Lock()
+	defer s.outputLock.Unlock()
+
 	fmt.Fprintf(s.output, s.formatter.Format(metric))
+}
+
+func (s *server) isClosed() bool {
+	return atomic.LoadInt32(&s.closed) != 0
 }

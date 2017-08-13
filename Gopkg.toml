@@ -13,7 +13,7 @@
 #   branch = "dev"
 #   source = "github.com/myfork/project2"
 #
-# [[override]]
-#  name = "github.com/x/y"
-#  version = "2.4.0"
+[[override]]
+ name = "github.com/stretchr/testify"
+ revision = "890a5c3458b43e6104ff5da8dfa139d013d77544"
 
