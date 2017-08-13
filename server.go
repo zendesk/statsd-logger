@@ -9,6 +9,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"sync"
+	"sync/atomic"
 )
 
 // DefaultAddress to listen for metrics on
@@ -42,8 +44,8 @@ func New(address string, options ...func(*server)) (Server, error) {
 		port:       addr.Port,
 		connection: conn,
 		output:     DefaultOutput,
-		closed:     false,
 		formatter:  DefaultFormatter,
+		outputLock: &sync.Mutex{},
 	}
 
 	for _, optionFunc := range options {
@@ -75,13 +77,14 @@ func WithFormatter(formatter MetricFormatter) func(*server) {
 type server struct {
 	port       int
 	connection *net.UDPConn
-	closed     bool
+	closed     int32
 	output     io.Writer
 	formatter  MetricFormatter
+	outputLock *sync.Mutex
 }
 
 func (s *server) Listen() error {
-	if s.closed {
+	if s.isClosed() {
 		return errors.New("[StatsD] Server already closed")
 	}
 
@@ -89,13 +92,12 @@ func (s *server) Listen() error {
 
 	buffer := make([]byte, 1024)
 
-	for !s.closed {
+	for !s.isClosed() {
 		numBytes, err := s.connection.Read(buffer)
 
 		// blocking read returns an error when connection is closed
-		if err != nil && s.closed {
+		if err != nil && s.isClosed() {
 			break
-
 		}
 
 		if err != nil {
@@ -113,12 +115,23 @@ func (s *server) Listen() error {
 }
 
 func (s *server) Close() error {
-	s.closed = true
+	atomic.StoreInt32(&s.closed, 1)
+
+	s.outputLock.Lock()
+	defer s.outputLock.Unlock()
+
 	fmt.Fprintf(s.output, "[StatsD] Shutting down\n")
 
 	return s.connection.Close()
 }
 
 func (s *server) logMetric(metric Metric) {
+	s.outputLock.Lock()
+	defer s.outputLock.Unlock()
+
 	fmt.Fprintf(s.output, s.formatter.Format(metric))
+}
+
+func (s *server) isClosed() bool {
+	return atomic.LoadInt32(&s.closed) != 0
 }

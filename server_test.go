@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -21,7 +22,11 @@ const (
 func TestListen(t *testing.T) {
 	color.NoColor = true
 
-	output := bytes.NewBuffer(make([]byte, 1000))
+	output := &buffer{
+		bytes.NewBuffer(make([]byte, 1000)),
+		sync.Mutex{},
+	}
+
 	server, err := New(testServerAddress, WithWriter(output))
 
 	go func() { server.Listen() }()
@@ -53,12 +58,12 @@ func TestInvalidAddress(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	server, err := New(testServerAddress, WithWriter(ioutil.Discard))
+	server, err := New(":0", WithWriter(ioutil.Discard))
 	assert.Nil(t, err)
 	assert.NotNil(t, server)
 
 	go func() { server.Listen() }()
-	sendMetric(Metric{Name: "hello", Value: "1|c", Tags: "country:australia"})
+
 	<-time.NewTimer(5 * time.Millisecond).C
 
 	err = server.Close()
@@ -80,6 +85,7 @@ func TestWithFormatter(t *testing.T) {
 	<-time.NewTimer(5 * time.Millisecond).C
 
 	formatter.AssertCalled(t, "Format", metric)
+	server.Close()
 }
 
 func sendMetric(metric Metric) {
@@ -95,9 +101,28 @@ type mockFormatter struct {
 	mock.Mock
 }
 
+// type assertion
 var _ MetricFormatter = &mockFormatter{}
 
 func (m *mockFormatter) Format(metric Metric) string {
 	args := m.MethodCalled("Format", metric)
 	return args.String(0)
+}
+
+// goroutine safe buffer to keep the race detector happy
+type buffer struct {
+	*bytes.Buffer
+	mutex sync.Mutex
+}
+
+func (s *buffer) Write(p []byte) (n int, err error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.Buffer.Write(p)
+}
+
+func (s *buffer) String() string {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.Buffer.String()
 }
