@@ -1,2 +1,6 @@
 # ignore vendored dependencies as this is intended to be used primarily as a library
 vendor/
+
+# vscode stuff
+.vscode
+debug.test
