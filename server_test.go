@@ -58,6 +58,8 @@ func TestInvalidAddress(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
+	// TODO: for some reason, having this test use the `testServerAddress` seems to cause panics
+	// probably should figure out why
 	server, err := New(":0", WithWriter(ioutil.Discard))
 	assert.Nil(t, err)
 	assert.NotNil(t, server)
