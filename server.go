@@ -27,43 +27,49 @@ type Server interface {
 }
 
 // New returns a local statsd logging server which logs to statsdLogger.DefaultOutput and is formatted with statsdLogger.DefaultFormatter
-func New(address string) (Server, error) {
-	return NewWithWriterAndFormatter(address, DefaultOutput, DefaultFormatter)
-}
-
-// NewWithWriter returns a local statsd logging server which logs to provided output
-func NewWithWriter(address string, output io.Writer) (Server, error) {
-	return NewWithWriterAndFormatter(address, output, DefaultFormatter)
-}
-
-// NewWithFormatter returns a local statsd logging server which logs with the provided formatter to statsdLogger.DefaultFormatter
-func NewWithFormatter(address string, formatter MetricFormatter) (Server, error) {
-	return NewWithWriterAndFormatter(address, DefaultOutput, formatter)
-}
-
-// NewWithWriterAndFormatter returns a local statsd logging server which logs to provided output and formats output with provided formatter
-func NewWithWriterAndFormatter(address string, output io.Writer, formatter MetricFormatter) (Server, error) {
+func New(address string, options ...func(*server)) (Server, error) {
 	addr, err := net.ResolveUDPAddr("udp", address)
-	port := addr.Port
-
 	if err != nil {
 		return nil, errors.New("[StatsD] Invalid address")
 	}
 
 	conn, _ := net.ListenUDP("udp", addr)
 	if err != nil {
-		return nil, errors.New("[StatsD] Unable to listen to udp stream")
+		return nil, fmt.Errorf("[StatsD] Unable to listen at udp: %s", address)
 	}
 
 	server := server{
-		port:       port,
+		port:       addr.Port,
 		connection: conn,
-		output:     output,
+		output:     DefaultOutput,
 		closed:     false,
-		formatter:  formatter,
+		formatter:  DefaultFormatter,
+	}
+
+	for _, optionFunc := range options {
+		optionFunc(&server)
 	}
 
 	return &server, nil
+}
+
+// WithWriter is is provided as an option to New to specify a custom io.Writer to output logs
+// usage:
+//	statsdLogger.New("0.0.0.0:8125", WithWriter(os.Stderr))
+func WithWriter(output io.Writer) func(*server) {
+	return func(server *server) {
+		server.output = output
+	}
+}
+
+// WithFormatter is is provided as an option to New to specify a custom formatter
+// usage:
+//
+//	statsdLogger.New("0.0.0.0:8125", WithFormatter(myCustomFormatter))
+func WithFormatter(formatter MetricFormatter) func(*server) {
+	return func(server *server) {
+		server.formatter = formatter
+	}
 }
 
 type server struct {
@@ -89,6 +95,7 @@ func (s *server) Listen() error {
 		// blocking read returns an error when connection is closed
 		if err != nil && s.closed {
 			break
+
 		}
 
 		if err != nil {

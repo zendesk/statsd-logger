@@ -9,22 +9,27 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+const (
+	testServerAddress = ":5678"
+	testSErverPort    = 5678
 )
 
 func TestListen(t *testing.T) {
 	color.NoColor = true
 
 	output := bytes.NewBuffer(make([]byte, 1000))
-	server, err := NewWithWriter(":5678", output)
+	server, err := New(testServerAddress, WithWriter(output))
 
 	go func() { server.Listen() }()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, server)
 
-	sendMetric(Metric{Name: "hello", Value: "1|c", Tags: "country:australia"}, 5678)
+	sendMetric(Metric{Name: "hello", Value: "1|c", Tags: "country:australia"})
 
 	<-time.NewTimer(5 * time.Millisecond).C
 
@@ -37,24 +42,62 @@ func TestListen(t *testing.T) {
 	assert.Contains(t, output.String(), "[StatsD] Shutting down")
 }
 
+func TestInvalidAddress(t *testing.T) {
+	server, err := New("abcd", WithWriter(ioutil.Discard))
+
+	assert.Error(t, err, "[StatsD] Invalid address")
+
+	if err == nil {
+		server.Close()
+	}
+}
+
 func TestClose(t *testing.T) {
-	server, err := NewWithWriter(":5679", ioutil.Discard)
+	server, err := New(testServerAddress, WithWriter(ioutil.Discard))
 	assert.Nil(t, err)
 	assert.NotNil(t, server)
 
 	go func() { server.Listen() }()
-
+	sendMetric(Metric{Name: "hello", Value: "1|c", Tags: "country:australia"})
 	<-time.NewTimer(5 * time.Millisecond).C
 
 	err = server.Close()
 	assert.Nil(t, err)
 }
 
-func sendMetric(metric Metric, port int) {
-	address, _ := net.ResolveUDPAddr("udp", ":5678")
+func TestWithFormatter(t *testing.T) {
+	formatter := &mockFormatter{}
+	metric := Metric{Name: "cool_metric"}
+	formatter.On("Format", metric).Return("ate 2 burgers")
+
+	server, err := New(testServerAddress, WithFormatter(formatter), WithWriter(ioutil.Discard))
+	defer server.Close()
+	assert.Nil(t, err)
+
+	go func() { server.Listen() }()
+
+	sendMetric(metric)
+	<-time.NewTimer(5 * time.Millisecond).C
+
+	formatter.AssertCalled(t, "Format", metric)
+}
+
+func sendMetric(metric Metric) {
+	address, _ := net.ResolveUDPAddr("udp", testServerAddress)
 	conn, _ := net.DialUDP("udp", nil, address)
 	defer conn.Close()
 
 	rawMetric := fmt.Sprintf("%s:%s#%s", metric.Name, metric.Value, metric.Tags)
 	conn.Write([]byte(rawMetric))
+}
+
+type mockFormatter struct {
+	mock.Mock
+}
+
+var _ MetricFormatter = &mockFormatter{}
+
+func (m *mockFormatter) Format(metric Metric) string {
+	args := m.MethodCalled("Format", metric)
+	return args.String(0)
 }
