@@ -16,7 +16,7 @@ go get -u github.com/catkins/statsd-logger/cmd/statsd-logger
 statsd-logger
 
 # send it some metrics using a library or (low-tech) netcat
-echo -n "my.awesome_counter:1|c#cool:tags,another_tag:with_value" | nc -u -u -w0 localhost 8125
+echo -n "my.awesome_counter:1|c#cool:tags,another_tag:with_value" | nc -u -w0 localhost 8125
 ```
 
 ### Library
