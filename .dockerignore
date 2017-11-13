@@ -1,0 +1,6 @@
+.git
+.gitignore
+.travis.yml
+LICENSE
+README.md
+*_test.go
