@@ -54,6 +54,15 @@ func main() {
 }
 ```
 
+## Docker
+
+This can also log StatsD metrics beibng being sent to udp:8125 on running `docker` containers.
+
+```sh
+# log metrics for container named "myapp"
+docker run --rm -it --net="container:myapp" catkins/statsd-logger
+```
+
 ## Licence
 
 The MIT License
