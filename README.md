@@ -58,7 +58,7 @@ func main() {
 
 ## Docker
 
-This can also log StatsD metrics beibng being sent to udp:8125 on running `docker` containers.
+`statsd-logger` can also log StatsD metrics being being sent to udp:8125 on running `docker` containers without modification.
 
 ```sh
 # log metrics for container named "myapp"
