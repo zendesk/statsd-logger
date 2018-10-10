@@ -35,7 +35,7 @@ func New(address string, options ...func(*server)) (Server, error) {
 		return nil, errors.New("[StatsD] Invalid address")
 	}
 
-	conn, _ := net.ListenUDP("udp", addr)
+	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("[StatsD] Unable to listen at udp: %s", address)
 	}
