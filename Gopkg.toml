@@ -17,3 +17,7 @@
  name = "github.com/stretchr/testify"
  revision = "890a5c3458b43e6104ff5da8dfa139d013d77544"
 
+
+[[constraint]]
+  name = "github.com/vmihailenco/msgpack"
+  version = "4.0.0"
