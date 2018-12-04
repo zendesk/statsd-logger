@@ -1,4 +1,4 @@
-FROM golang:1.9 as binary-builder
+FROM golang:1.11 as binary-builder
 
 WORKDIR /go/src/github.com/catkins/statsd-logger
 
