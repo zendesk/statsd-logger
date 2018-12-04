@@ -19,43 +19,6 @@ statsd-logger
 echo -n "my.awesome_counter:1|c#cool:tags,another_tag:with_value" | nc -u -w0 localhost 8125
 ```
 
-### Library
-
-```bash
-go get -u github.com/catkins/statsd-logger
-```
-
-Embed it into an existing application
-
-```go
-package main
-
-import (
-	"os"
-	"os/signal"
-	"syscall"
-
-	"github.com/catkins/statsd-logger"
-)
-
-func main() {
-	shutdownChan := make(chan os.Signal)
-	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-
-	server, err := statsdLogger.New("0.0.0.0:8125")
-	if err != nil {
-		panic(err)
-	}
-
-	go func() {
-		server.Listen()
-	}()
-
-	<-shutdownChan
-	server.Close()
-}
-```
-
 ## Docker
 
 `statsd-logger` can also log StatsD metrics being being sent to udp:8125 on running `docker` containers without modification.
