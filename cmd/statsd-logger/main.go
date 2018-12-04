@@ -5,22 +5,30 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/catkins/statsd-logger"
+	"github.com/catkins/statsd-logger/metrics"
+	"github.com/catkins/statsd-logger/trace"
 )
 
 func main() {
 	shutdownChan := make(chan os.Signal)
 	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
-	server, err := statsdLogger.New("0.0.0.0:8125")
+	metricsServer, err := metrics.NewServer(metrics.DefaultAddress)
 	if err != nil {
 		panic(err)
 	}
 
 	go func() {
-		server.Listen()
+		metricsServer.Listen()
+	}()
+
+	traceServer := trace.NewServer(trace.DefaultAddress)
+
+	go func() {
+		traceServer.Listen()
 	}()
 
 	<-shutdownChan
-	server.Close()
+	metricsServer.Close()
+	traceServer.Close()
 }

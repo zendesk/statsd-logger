@@ -1,8 +1,7 @@
 language: go
 
 go:
-  - 1.8
-  - 1.9
+  - 1.11
 
 cache:
   - vendor
@@ -16,4 +15,4 @@ install:
   - dep ensure -v
 
 script:
-  - go test -v -race
+  - go test -v -race ./...

@@ -1,4 +1,4 @@
-package statsdLogger
+package metrics
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParseMetric(t *testing.T) {
+func TestParse(t *testing.T) {
 	cases := []struct {
 		input    string
 		expected Metric
@@ -22,6 +22,6 @@ func TestParseMetric(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		assert.Equal(t, tc.expected, ParseMetric(tc.input))
+		assert.Equal(t, tc.expected, Parse(tc.input))
 	}
 }
