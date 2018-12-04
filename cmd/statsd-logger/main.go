@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"github.com/catkins/statsd-logger/metrics"
+	"github.com/catkins/statsd-logger/trace"
 )
 
 func main() {
@@ -21,6 +22,13 @@ func main() {
 		metricsServer.Listen()
 	}()
 
+	traceServer := trace.NewServer(trace.DefaultAddress)
+
+	go func() {
+		traceServer.Listen()
+	}()
+
 	<-shutdownChan
 	metricsServer.Close()
+	traceServer.Close()
 }
