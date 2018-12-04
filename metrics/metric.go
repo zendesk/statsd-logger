@@ -1,6 +1,9 @@
-package statsdLogger
+package metrics
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Metric is an intermediate representation of a raw statsd metric for easier presentation
 type Metric struct {
@@ -9,8 +12,14 @@ type Metric struct {
 	Tags  string
 }
 
-// ParseMetric takes a raw statsd metric and returns a populated Metric
-func ParseMetric(rawMetric string) Metric {
+// Parse takes a raw statsd metric and returns a populated Metric
+func Parse(rawMetric string) (metric Metric) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("error parsing metric: %+v\n", r)
+		}
+	}()
+
 	metricNameAndRest := strings.SplitN(rawMetric, ":", 2)
 	name := metricNameAndRest[0]
 	valueAndTags := strings.SplitN(metricNameAndRest[1], "#", 2)

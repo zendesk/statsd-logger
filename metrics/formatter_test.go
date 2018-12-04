@@ -1,4 +1,4 @@
-package statsdLogger
+package metrics
 
 import "testing"
 import "github.com/fatih/color"

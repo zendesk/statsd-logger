@@ -1,7 +1,7 @@
-// Package statsdLogger provides a simple dummy StatsD logging server for local development
+// Package metrics provides a simple dummy StatsD logging server for local development
 //
 // Adapted from http://lee.hambley.name/2013/01/26/dirt-simple-statsd-server-for-local-development.html
-package statsdLogger
+package metrics
 
 import (
 	"errors"
@@ -28,8 +28,8 @@ type Server interface {
 	Close() error
 }
 
-// New returns a local statsd logging server which logs to statsdLogger.DefaultOutput and is formatted with statsdLogger.DefaultFormatter
-func New(address string, options ...func(*server)) (Server, error) {
+// NewServer returns a local statsd logging server which logs to statsdLogger.DefaultOutput and is formatted with statsdLogger.DefaultFormatter
+func NewServer(address string, options ...func(*server)) (Server, error) {
 	addr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		return nil, errors.New("[StatsD] Invalid address")
@@ -90,7 +90,7 @@ func (s *server) Listen() error {
 
 	fmt.Fprintf(s.output, "[StatsD] Listening on port %d\n", s.port)
 
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 10000)
 
 	for !s.isClosed() {
 		numBytes, err := s.connection.Read(buffer)
@@ -106,7 +106,7 @@ func (s *server) Listen() error {
 		}
 
 		rawMetric := buffer[0:numBytes]
-		metric := ParseMetric(string(rawMetric))
+		metric := Parse(string(rawMetric))
 
 		s.logMetric(metric)
 	}

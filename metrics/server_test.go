@@ -1,4 +1,4 @@
-package statsdLogger
+package metrics
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ import (
 
 const (
 	testServerAddress = ":5678"
-	testSErverPort    = 5678
+	testServerPort    = 5678
 )
 
 func TestListen(t *testing.T) {
@@ -27,7 +27,7 @@ func TestListen(t *testing.T) {
 		sync.Mutex{},
 	}
 
-	server, err := New(testServerAddress, WithWriter(output))
+	server, err := NewServer(testServerAddress, WithWriter(output))
 
 	go func() { server.Listen() }()
 
@@ -48,7 +48,7 @@ func TestListen(t *testing.T) {
 }
 
 func TestInvalidAddress(t *testing.T) {
-	server, err := New("abcd", WithWriter(ioutil.Discard))
+	server, err := NewServer("abcd", WithWriter(ioutil.Discard))
 
 	assert.Error(t, err, "[StatsD] Invalid address")
 
@@ -60,7 +60,7 @@ func TestInvalidAddress(t *testing.T) {
 func TestClose(t *testing.T) {
 	// TODO: for some reason, having this test use the `testServerAddress` seems to cause panics
 	// probably should figure out why
-	server, err := New(":0", WithWriter(ioutil.Discard))
+	server, err := NewServer(":0", WithWriter(ioutil.Discard))
 	assert.Nil(t, err)
 	assert.NotNil(t, server)
 
@@ -77,7 +77,7 @@ func TestWithFormatter(t *testing.T) {
 	metric := Metric{Name: "cool_metric"}
 	formatter.On("Format", metric).Return("ate 2 burgers")
 
-	server, err := New(testServerAddress, WithFormatter(formatter), WithWriter(ioutil.Discard))
+	server, err := NewServer(testServerAddress, WithFormatter(formatter), WithWriter(ioutil.Discard))
 	defer server.Close()
 	assert.Nil(t, err)
 

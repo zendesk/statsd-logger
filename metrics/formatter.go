@@ -1,4 +1,4 @@
-package statsdLogger
+package metrics
 
 import (
 	"fmt"
