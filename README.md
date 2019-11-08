@@ -7,6 +7,8 @@
 
 Simple logger for StatsD metrics, adapted from http://lee.hambley.name/2013/01/26/dirt-simple-statsd-server-for-local-development.html to make it easier to debug metrics in development. Beyond converting it from Ruby to Go, also add colour output and rendering of DogStatsd tags.
 
+It will also listen for Datadog APM traces and log them out.
+
 ## Usage
 
 ### CLI
