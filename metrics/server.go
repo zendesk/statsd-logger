@@ -4,6 +4,7 @@
 package metrics
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -105,10 +106,17 @@ func (s *server) Listen() error {
 			continue
 		}
 
-		rawMetric := buffer[0:numBytes]
-		metric := Parse(string(rawMetric))
+		rawMetrics := buffer[0:numBytes]
+		splitMetrics := bytes.Split(rawMetrics, []byte("\n"))
 
-		s.logMetric(metric)
+		for _, rawMetric := range splitMetrics {
+			rawMetric = bytes.TrimSpace(rawMetric)
+			if len(rawMetric) == 0 {
+				continue
+			}
+			metric := Parse(string(rawMetric))
+			s.logMetric(metric)
+		}
 	}
 
 	return nil

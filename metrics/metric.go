@@ -16,7 +16,7 @@ type Metric struct {
 func Parse(rawMetric string) (metric Metric) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("error parsing metric: %+v\n", r)
+			fmt.Printf("error parsing metric: %q %+v\n", rawMetric, r)
 		}
 	}()
 

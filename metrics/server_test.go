@@ -35,11 +35,17 @@ func TestListen(t *testing.T) {
 	assert.NotNil(t, server)
 
 	sendMetric(Metric{Name: "hello", Value: "1|c", Tags: "country:australia"})
+	sendMetrics(
+		Metric{Name: "another_metric", Value: "2|c", Tags: "country:greece"},
+		Metric{Name: "another_metric", Value: "3|c", Tags: "country:malta"},
+	)
 
 	<-time.NewTimer(5 * time.Millisecond).C
 
 	assert.Contains(t, output.String(), "[StatsD] Listening on port 5678")
 	assert.Contains(t, output.String(), "[StatsD] hello 1|c country:australia")
+	assert.Contains(t, output.String(), "[StatsD] another_metric 2|c country:greece")
+	assert.Contains(t, output.String(), "[StatsD] another_metric 3|c country:malta")
 	assert.NotContains(t, output.String(), "[StatsD] Shutting down")
 
 	server.Close()
@@ -97,6 +103,18 @@ func sendMetric(metric Metric) {
 
 	rawMetric := fmt.Sprintf("%s:%s#%s", metric.Name, metric.Value, metric.Tags)
 	conn.Write([]byte(rawMetric))
+}
+
+func sendMetrics(metrics ...Metric) {
+	address, _ := net.ResolveUDPAddr("udp", testServerAddress)
+	conn, _ := net.DialUDP("udp", nil, address)
+	defer conn.Close()
+
+	message := ""
+	for _, metric := range metrics {
+		message = message + "\n" + fmt.Sprintf("%s:%s#%s", metric.Name, metric.Value, metric.Tags)
+	}
+	conn.Write([]byte(message))
 }
 
 type mockFormatter struct {
