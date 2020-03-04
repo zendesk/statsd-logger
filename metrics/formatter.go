@@ -34,7 +34,12 @@ func (c colorFormatter) formatTags(rawTags string) string {
 	formattedTags := []string{}
 	for _, tag := range tags {
 		tagParts := strings.SplitN(tag, ":", 2)
-		formattedTag := fmt.Sprintf("%s%s", color.CyanString(tagParts[0]+":"), color.WhiteString(tagParts[1]))
+		key := tagParts[0] + ":"
+		value := ""
+		if len(tagParts) == 2 {
+			value = tagParts[1]
+		}
+		formattedTag := fmt.Sprintf("%s%s", color.CyanString(key), color.WhiteString(value))
 		formattedTags = append(formattedTags, formattedTag)
 	}
 

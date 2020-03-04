@@ -18,6 +18,14 @@ func TestDefaultFormatterWithColorDisabled(t *testing.T) {
 	})
 
 	assert.Equal(t, output, "[StatsD] exciting_metric 1|c a_tag:123\n")
+
+	output = formatter.Format(Metric{
+		Name:  "exciting_metric",
+		Value: "1|c",
+		Tags:  "a_tag:123 another_tag:",
+	})
+
+	assert.Equal(t, output, "[StatsD] exciting_metric 1|c a_tag:123 another_tag:\n")
 }
 
 func TestDefaultFormatterWithColorEnabled(t *testing.T) {
