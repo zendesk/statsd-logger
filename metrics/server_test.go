@@ -17,6 +17,7 @@ import (
 const (
 	testServerAddress = ":5678"
 	testServerPort    = 5678
+	testWaitTime      = 50 * time.Millisecond
 )
 
 func TestListen(t *testing.T) {
@@ -34,13 +35,13 @@ func TestListen(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, server)
 
-	sendMetric(Metric{Name: "hello", Value: "1|c", Tags: "country:australia"})
 	sendMetrics(
+		Metric{Name: "hello", Value: "1|c", Tags: "country:australia"},
 		Metric{Name: "another_metric", Value: "2|c", Tags: "country:greece"},
 		Metric{Name: "another_metric", Value: "3|c", Tags: "country:malta"},
 	)
 
-	<-time.NewTimer(5 * time.Millisecond).C
+	<-time.NewTimer(testWaitTime).C
 
 	assert.Contains(t, output.String(), "[StatsD] Listening on port 5678")
 	assert.Contains(t, output.String(), "[StatsD] hello 1|c country:australia")
@@ -72,7 +73,7 @@ func TestClose(t *testing.T) {
 
 	go func() { server.Listen() }()
 
-	<-time.NewTimer(5 * time.Millisecond).C
+	<-time.NewTimer(testWaitTime).C
 
 	err = server.Close()
 	assert.Nil(t, err)
@@ -90,7 +91,7 @@ func TestWithFormatter(t *testing.T) {
 	go func() { server.Listen() }()
 
 	sendMetric(metric)
-	<-time.NewTimer(5 * time.Millisecond).C
+	<-time.NewTimer(testWaitTime).C
 
 	formatter.AssertCalled(t, "Format", metric)
 	server.Close()
