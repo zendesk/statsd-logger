@@ -3,8 +3,8 @@ on: [push]
 jobs:
   test:
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: zendesk/checkout@v2
+      - uses: zendesk/setup-go@v2
         with:
           go-version: '1.17'
       - run: go test ./...
