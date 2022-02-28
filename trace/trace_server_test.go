@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/vmihailenco/msgpack"
@@ -20,6 +21,8 @@ func TestServer_Listen(t *testing.T) {
 		server.Listen()
 	}()
 	defer server.Close()
+
+	time.Sleep(50 * time.Millisecond)
 
 	traces := Traces{
 		Trace{
