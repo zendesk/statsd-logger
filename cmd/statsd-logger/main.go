@@ -5,8 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/catkins/statsd-logger/metrics"
-	"github.com/catkins/statsd-logger/trace"
+	"github.com/zendesk/statsd-logger/metrics"
+	"github.com/zendesk/statsd-logger/trace"
 )
 
 func main() {
