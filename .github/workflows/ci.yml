@@ -2,6 +2,7 @@ name: Continuous Integration
 on: [push]
 jobs:
   test:
+    runs-on: ubuntu-latest
     steps:
       - uses: zendesk/checkout@v2
       - uses: zendesk/setup-go@v2
