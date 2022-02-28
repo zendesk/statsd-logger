@@ -15,6 +15,7 @@ RUN go build -o statsd-logger cmd/statsd-logger/main.go
 FROM alpine:latest
 
 EXPOSE 8125/udp
+EXPOSE 8126
 
 RUN mkdir /app
 WORKDIR /app
