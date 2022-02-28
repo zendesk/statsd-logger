@@ -29,4 +29,6 @@ jobs:
       - name: Push images
         run: |-
           set -eu -o pipefail
-          docker buildx push --platform=linux/arm64,linux/amd64 --file=Dockerfile --tag="zendesk/statsd-logger:latest" .
+          echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login --username=${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+          set -x
+          docker buildx build --push --platform=linux/arm64,linux/amd64 --file=Dockerfile --tag="zendesk/statsd-logger:latest" .
