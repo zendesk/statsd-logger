@@ -25,7 +25,6 @@ jobs:
   push_image:
     if: github.ref_name == 'master'
     runs-on: ubuntu-latest
-    needs: build_image
     steps:
       - uses: zendesk/checkout@v2
       - name: Set up QEMU
