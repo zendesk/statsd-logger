@@ -2,6 +2,7 @@ name: Build Docker Images
 on: [push]
 jobs:
   build_image:
+    if: github.ref_name != 'master'
     runs-on: ubuntu-latest
     steps:
       - uses: zendesk/checkout@v2
@@ -26,6 +27,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_image
     steps:
+      - uses: zendesk/checkout@v2
+      - name: Set up QEMU
+        run: |-
+          QEMU_IMAGE=tonistiigi/binfmt:latest
+          docker pull $QEMU_IMAGE
+          docker image inspect $QEMU_IMAGE
+          docker run --rm --privileged $QEMU_IMAGE --install all
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: zendesk/setup-buildx-action@v1.6.0
+        with:
+          install: true
       - name: Push images
         run: |-
           set -eu -o pipefail
