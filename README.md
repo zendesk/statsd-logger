@@ -25,7 +25,7 @@ echo -n "my.awesome_counter:1|c#cool:tags,another_tag:with_value" | nc -u -w0 lo
 
 ```sh
 # log metrics for container named "myapp"
-docker run --rm -it --net="container:myapp" catkins/statsd-logger
+docker run --rm -it --net="container:myapp" zendesk/statsd-logger
 ```
 
 ## Licence
