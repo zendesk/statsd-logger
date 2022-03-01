@@ -1,0 +1,34 @@
+name: Build Docker Images
+on: [push]
+jobs:
+  build_image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: zendesk/checkout@v2
+      - name: Set up QEMU
+        run: |-
+          QEMU_IMAGE=tonistiigi/binfmt:latest
+          docker pull $QEMU_IMAGE
+          docker image inspect $QEMU_IMAGE
+          docker run --rm --privileged $QEMU_IMAGE --install all
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: zendesk/setup-buildx-action@v1.6.0
+        with:
+          install: true
+      - name: Build images
+        run: |-
+          set -eu -o pipefail
+          docker buildx build --platform=linux/arm64,linux/amd64 --file=Dockerfile --tag="zendesk/statsd-logger:latest" .
+
+  push_image:
+    if: github.ref_name == 'master'
+    runs-on: ubuntu-latest
+    needs: build_image
+    steps:
+      - name: Push images
+        run: |-
+          set -eu -o pipefail
+          echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login --username=${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+          set -x
+          docker buildx build --push --platform=linux/arm64,linux/amd64 --file=Dockerfile --tag="zendesk/statsd-logger:latest" .
