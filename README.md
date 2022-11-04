@@ -5,14 +5,14 @@
 
 Simple logger for StatsD metrics, adapted from http://lee.hambley.name/2013/01/26/dirt-simple-statsd-server-for-local-development.html to make it easier to debug metrics in development. Beyond converting it from Ruby to Go, also adds colour output and rendering of DogStatsd tags.
 
-It will also listen for Datadog APM traces and log them out.
+It will also listen for Datadog APM traces on port 8126 and log them out.
 
 ## Usage
 
 ### CLI
 
 ```bash
-go get -u github.com/zendesk/statsd-logger/cmd/statsd-logger
+go install github.com/zendesk/statsd-logger/cmd/statsd-logger@latest
 statsd-logger
 
 # send it some metrics using a library or (low-tech) netcat
